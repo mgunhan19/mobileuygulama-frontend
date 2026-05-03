@@ -19,9 +19,10 @@ export default function MainMenu({ navigation }) {
       
       <TouchableOpacity 
         style={styles.menuButton} 
-        onPress={() => Alert.alert("Bilgi", "Oyun yakında başlıyor!")}
+     onPress={() => navigation.navigate('Game')}
       >
         <Text style={styles.buttonText}>OYUNU BAŞLAT</Text>
+        
       </TouchableOpacity>
 
       <TouchableOpacity 
