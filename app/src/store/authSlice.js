@@ -1,19 +1,25 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const authSlice = createSlice({//Redux dilimini kullanarak authSlice oluşturuyoruz, böylece kullanıcı bilgilerini ve giriş durumunu merkezi bir şekilde yönetebiliriz
+const authSlice = createSlice({
   name: 'auth',
   initialState: {user: null, isLoggedIn: false},
   reducers: {
-    loginAction: (state, action) => {//Giriş yapan kullanıcıyı Redux'a kaydediyoruz
+    loginAction: (state, action) => {
       state.user = action.payload;
       state.isLoggedIn = true;
     },
-    logoutAction: (state) => {//Çıkış yapıldığında kullanıcı bilgilerini temizliyoruz
+    logoutAction: (state) => {
       state.user = null;
       state.isLoggedIn = false;
-    }
+    },
+    
+    updateUserScore: (state, action) => {
+      if (state.user) {
+        state.user.score = action.payload; 
+      }
+    },
   }
 });
 
-export const {loginAction, logoutAction} = authSlice.actions;//Redux aksiyonlarını ve reducer'ı export ediyoruz, böylece uygulamanın diğer bölümlerinde kullanıcı bilgilerini güncelleyebilir ve erişebiliriz
-export default authSlice.reducer;//Redux dilimini kullanarak authSlice oluşturuyoruz, böylece kullanıcı bilgilerini ve giriş durumunu merkezi bir şekilde yönetebiliriz
+export const {loginAction, logoutAction, updateUserScore} = authSlice.actions;
+export default authSlice.reducer;
