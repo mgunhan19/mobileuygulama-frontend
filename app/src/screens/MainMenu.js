@@ -3,12 +3,25 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutAction } from '../store/authSlice'; 
 import { LinearGradient } from 'expo-linear-gradient';
+import { Audio } from 'expo-av'; 
 
 export default function MainMenu({ navigation }) {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
+  // EKLEME: Tıklama sesi fonksiyonu
+  const playClick = async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(require('../../../assets/images/sounds/click.wav'));
+      await sound.playAsync();
+      sound.setOnPlaybackStatusUpdate((status) => { if (status.didJustFinish) sound.unloadAsync(); });
+    } catch (error) {
+      console.log("Ses çalma hatası:", error);
+    }
+  };
+
   const handleLogout = () => {
+    playClick(); // EKLEME
     dispatch(logoutAction());
     navigation.navigate('Login'); 
   };
@@ -21,24 +34,21 @@ export default function MainMenu({ navigation }) {
       </View>
 
       <View style={styles.menuCard}>
-        {/* ANA AKSİYON BUTONU (AYRI DURUYOR) */}
         <TouchableOpacity 
           style={styles.mainActionButton} 
-          onPress={() => navigation.navigate('Game')}
+          onPress={() => { playClick(); navigation.navigate('Game'); }} 
         >
           <LinearGradient colors={['#4CAF50', '#66BB6A']} style={styles.buttonGradient}>
             <Text style={styles.mainButtonText}>OYUNU BAŞLAT</Text>
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* AYIRICI ÇİZGİ VEYA BOŞLUK */}
         <View style={styles.spacer} />
 
-        {/* YARDIMCI BUTONLAR GRUBU */}
         <View style={styles.secondaryButtonGroup}>
           <TouchableOpacity 
             style={styles.secondaryButton} 
-            onPress={() => navigation.navigate('Profile')}
+            onPress={() => { playClick(); navigation.navigate('Profile'); }} 
           >
             <LinearGradient colors={['#6772e5', '#5469d4']} style={styles.buttonGradient}>
               <Text style={styles.secondaryButtonText}>PROFİLİM</Text>
@@ -47,7 +57,7 @@ export default function MainMenu({ navigation }) {
 
           <TouchableOpacity 
             style={styles.secondaryButton} 
-            onPress={() => Alert.alert("Bilgi", "Liderlik tablosu hazırlanıyor.")}
+            onPress={() => { playClick(); navigation.navigate('Leaderboard'); }}
           >
             <LinearGradient colors={['#FFB74D', '#FFA726']} style={styles.buttonGradient}>
               <Text style={styles.secondaryButtonText}>SKOR TABLOSU</Text>
@@ -65,7 +75,7 @@ export default function MainMenu({ navigation }) {
         </View>
       </View>
       
-      <Text style={styles.footerText}>Bildin Bildin v1.0</Text>
+      <Text style={styles.footerText}>Bildin Bildin /STARKLAR GAME</Text>
     </LinearGradient>
   );
 }

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Scr
 import { useSelector, useDispatch } from 'react-redux';
 import { LinearGradient } from 'expo-linear-gradient';
 import { updateUserScore } from '../store/authSlice';
+import { Audio } from 'expo-av'; // EKLEME: Ses kütüphanesi
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -26,31 +27,49 @@ export default function GameScreen({ navigation }) {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
-  // --- ANIMASYON DEĞERLERİ ---
-  const translateX = useSharedValue(-width); // Başlangıçta ekranın solunda gizli
+  // --- SES FONKSİYONU ---
+  const playSound = async (type) => {
+    const soundFiles = {
+      correct: require('../../../assets/images/sounds/correct.mp3'),
+      wrong: require('../../../assets/images/sounds/wrong.wav'),
+      click: require('../../../assets/images/sounds/click.wav'),
+    };
+    const { sound } = await Audio.Sound.createAsync(soundFiles[type]);
+    await sound.playAsync();
+    sound.setOnPlaybackStatusUpdate((status) => { if (status.didJustFinish) sound.unloadAsync(); });
+  };
+
+  // --- ARKA PLAN MÜZİĞİ ---
+  useEffect(() => {
+    let bgInstance = new Audio.Sound();
+    const setupBg = async () => {
+      try {
+        await bgInstance.loadAsync(require('../../../assets/images/sounds/bg_music.wav'));
+        await bgInstance.setIsLoopingAsync(true);
+        await bgInstance.setVolumeAsync(0.3);
+        await bgInstance.playAsync();
+      } catch (e) { console.log("Müzik Hatası"); }
+    };
+    setupBg();
+    return () => { bgInstance.stopAsync(); bgInstance.unloadAsync(); };
+  }, []);
+
+  const translateX = useSharedValue(-width);
   const translateY = useSharedValue(0);
   const opacity = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value }
-    ],
+    transform: [{ translateX: translateX.value }, { translateY: translateY.value }],
   }));
 
-  useEffect(() => {
-    fetchQuestions(currentLevel);
-  }, [currentLevel]);
+  useEffect(() => { fetchQuestions(currentLevel); }, [currentLevel]);
 
-  // Soru değiştiğinde giriş animasyonu
   useEffect(() => {
     if (!loading && questions.length > 0) {
-      translateX.value = -width; // Sola çek
+      translateX.value = -width;
       translateY.value = 0;
       opacity.value = 0;
-
-      // Hızla içeri kaydır
       translateX.value = withTiming(0, { duration: 600, easing: Easing.out(Easing.back(1)) });
       opacity.value = withTiming(1, { duration: 400 });
     }
@@ -58,16 +77,8 @@ export default function GameScreen({ navigation }) {
 
   useEffect(() => {
     if (loading || questions.length === 0 || selectedAnimOption !== null) return;
-
-    if (timeLeft === 0) {
-      handleAnswer(null); 
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
-    }, 1000);
-
+    if (timeLeft === 0) { handleAnswer(null); return; }
+    const timer = setInterval(() => { setTimeLeft((prev) => prev - 1); }, 1000);
     return () => clearInterval(timer);
   }, [timeLeft, loading, questions, selectedAnimOption]);
 
@@ -93,12 +104,8 @@ export default function GameScreen({ navigation }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, score: finalScore }),
       });
-      if (response.ok) {
-        dispatch(updateUserScore(finalScore));
-      }
-    } catch (error) {
-      console.log("Skor kaydedilemedi:", error);
-    }
+      if (response.ok) { dispatch(updateUserScore(finalScore)); }
+    } catch (error) { console.log("Skor kaydedilemedi:", error); }
   };
 
   const handleAnswer = (selectedOption) => {
@@ -108,22 +115,21 @@ export default function GameScreen({ navigation }) {
     setSelectedAnimOption(selectedOption === null ? "TIMEOUT" : selectedOption);
 
     const isCorrect = selectedOption === currentQuestion.correctAnswer;
-    let newScore = score;
+    
+    // --- SES TETİKLEME ---
+    if (selectedOption === null || !isCorrect) { playSound('wrong'); }
+    else { playSound('correct'); }
 
+    let newScore = score;
     if (isCorrect) {
       newScore = score + 10;
       setScore(newScore);
-      // DOĞRU: 0.5 saniye bekle ve yukarı fırlat
       translateY.value = withDelay(500, withTiming(-width * 1.5, { duration: 600, easing: Easing.in(Easing.exp) }));
       opacity.value = withDelay(700, withTiming(0, { duration: 300 }));
     } else {
-      // YANLIŞ: Sertçe salla (Shake)
       translateX.value = withSequence(
-        withTiming(-20, { duration: 50 }),
-        withTiming(20, { duration: 50 }),
-        withTiming(-20, { duration: 50 }),
-        withTiming(20, { duration: 50 }),
-        withTiming(0, { duration: 50 })
+        withTiming(-20, { duration: 50 }), withTiming(20, { duration: 50 }),
+        withTiming(-20, { duration: 50 }), withTiming(20, { duration: 50 }), withTiming(0, { duration: 50 })
       );
     }
 
@@ -135,16 +141,12 @@ export default function GameScreen({ navigation }) {
       } 
       else {
         saveScoreToDB(newScore);
-        Alert.alert(
-          "Level Tamamlandı!", 
-          `Seviye ${currentLevel} bitti. Puanın: ${newScore}`, 
-          [
-            { text: "Sonraki Seviye", onPress: () => { setSelectedAnimOption(null); setCurrentLevel(prev => prev + 1); } },
-            { text: "Ana Menü", onPress: () => navigation.navigate('MainMenu') }
-          ]
-        );
+        Alert.alert("Level Tamamlandı!", `Seviye ${currentLevel} bitti. Puanın: ${newScore}`, [
+          { text: "Sonraki Seviye", onPress: () => { setSelectedAnimOption(null); setCurrentLevel(prev => prev + 1); } },
+          { text: "Ana Menü", onPress: () => navigation.navigate('MainMenu') }
+        ]);
       }
-    }, 1200); // Animasyonların tamamlanması için süre uzatıldı
+    }, 1200);
   };
 
   if (loading) return (
@@ -208,7 +210,10 @@ export default function GameScreen({ navigation }) {
               <TouchableOpacity 
                 key={opt} 
                 style={getOptionStyle(opt)} 
-                onPress={() => handleAnswer(opt)}
+                onPress={() => {
+                  playSound('click'); // EKLEME: Tıklama sesi
+                  handleAnswer(opt);
+                }}
                 disabled={selectedAnimOption !== null}
               >
                 <View style={getLetterStyle(opt)}>
