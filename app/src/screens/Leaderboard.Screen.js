@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function LeaderboardScreen({ navigation }) {
   const [data, setData] = useState([]);
