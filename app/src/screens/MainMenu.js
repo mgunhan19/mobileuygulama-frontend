@@ -12,6 +12,7 @@ export default function MainMenu({ navigation }) {
   // EKLEME: Tıklama sesi fonksiyonu
   const playClick = async () => {
     try {
+      // Ses dosyası yolunun doğruluğundan emin ol (../../../assets/images/sounds/click.wav)
       const { sound } = await Audio.Sound.createAsync(require('../../../assets/images/sounds/click.wav'));
       await sound.playAsync();
       sound.setOnPlaybackStatusUpdate((status) => { if (status.didJustFinish) sound.unloadAsync(); });
@@ -21,7 +22,7 @@ export default function MainMenu({ navigation }) {
   };
 
   const handleLogout = () => {
-    playClick(); // EKLEME
+    playClick(); 
     dispatch(logoutAction());
     navigation.navigate('Login'); 
   };
@@ -34,6 +35,7 @@ export default function MainMenu({ navigation }) {
       </View>
 
       <View style={styles.menuCard}>
+        {/* ANA AKSİYON BUTONU (AYRI DURUYOR) */}
         <TouchableOpacity 
           style={styles.mainActionButton} 
           onPress={() => { playClick(); navigation.navigate('Game'); }} 
@@ -43,8 +45,10 @@ export default function MainMenu({ navigation }) {
           </LinearGradient>
         </TouchableOpacity>
 
+        {/* AYIRICI ÇİZGİ VEYA BOŞLUK */}
         <View style={styles.spacer} />
 
+        {/* YARDIMCI BUTONLAR GRUBU */}
         <View style={styles.secondaryButtonGroup}>
           <TouchableOpacity 
             style={styles.secondaryButton} 
@@ -55,6 +59,7 @@ export default function MainMenu({ navigation }) {
             </LinearGradient>
           </TouchableOpacity>
 
+          {/* GÜNCELLENEN KISIM: Skor Tablosu artık Leaderboard sayfasına yönlendiriyor */}
           <TouchableOpacity 
             style={styles.secondaryButton} 
             onPress={() => { playClick(); navigation.navigate('Leaderboard'); }}
