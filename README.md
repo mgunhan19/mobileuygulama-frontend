@@ -1,36 +1,36 @@
 # 🎮 Bildin Bildin - Mobil Bilgi Yarışması Oyunu
 
-**Bildin Bildin**, Starklar Game tarafından geliştirilen, kullanıcıların zamana karşı yarıştığı, dinamik animasyonlar ve ses efektleriyle zenginleştirilmiş modern bir mobil bilgi yarışması oyunudur. Proje, full-stack (React Native & NestJS) bir mimariye sahiptir.
+"Bildin Bildin", Starklar Game tarafından geliştirilen, kullanıcıların zamana karşı yarıştığı, dinamik animasyonlar ve ses efektleriyle zenginleştirilmiş modern bir mobil bilgi yarışması oyunudur. Proje, full-stack (React Native & NestJS) bir mimariye sahiptir.
 
 ---
 
 ## 🚀 Özellikler
 
-* **Dinamik Seviye (Level) Sistemi:** Kullanıcılar her seviyede farklı zorlukta sorularla karşılaşır. Seviye tamamlandığında skorları güncellenir.
-* **Zamana Karşı Yarış:** Her soru için oyuncunun 15 saniyesi vardır. Süre bittiğinde otomatik olarak yanlış cevap sayılır.
-* **Game Feel & Akıcı Animasyonlar (`React-Native-Reanimated`):** * Sorular ekrana soldan hızla kayarak girer.
+* Dinamik Seviye (Level) Sistemi:Kullanıcılar her seviyede farklı zorlukta sorularla karşılaşır. Seviye tamamlandığında skorları güncellenir.
+* Zamana Karşı Yarış: Her soru için oyuncunun 15 saniyesi vardır. Süre bittiğinde otomatik olarak yanlış cevap sayılır.
+* Game Feel & Akıcı Animasyonlar (`React-Native-Reanimated`): Sorular ekrana soldan hızla kayarak girer.
     * Doğru cevap verildiğinde soru kartı yeşil olur ve geri dönüt vermiş olur.
     * Yanlış cevapta kart iki yana sallanarak (Shake efekti) kullanıcıya geri bildirim verir.
-* **Ses Efektleri (`Expo-AV`):** Doğru/yanlış cevap tınıları ve oyun içi arka plan müziği ile zenginleştirilmiş ses tasarımı.
-* **Merkezi State Yönetimi (`Redux Toolkit`):** Kullanıcı giriş durumu ve skor bilgileri yerel hafızada anlık olarak senkronize edilir, profil sayfasında anında güncellenir.
-* **Canlı Liderlik Tablosu (Leaderboard):** Tüm oyuncuların `highScore` (en yüksek skor) verilerini veri tabanından çekerek ilk 10 oyuncuyu sıralar.
+* Ses Efektleri (`Expo-AV`): Doğru/yanlış cevap tınıları ve oyun içi arka plan müziği ile zenginleştirilmiş ses tasarımı.
+* Merkezi State Yönetimi (`Redux Toolkit`): Kullanıcı giriş durumu ve skor bilgileri yerel hafızada anlık olarak senkronize edilir, profil sayfasında anında güncellenir.
+* Canlı Liderlik Tablosu (Leaderboard): Tüm oyuncuların `highScore` (en yüksek skor) verilerini veri tabanından çekerek ilk 10 oyuncuyu sıralar.
 
 ---
 
 ## 🛠️ Kullanılan Teknolojiler
 
 ### Frontend (Mobil Uygulama)
-* **React Native** & **Expo**
-* **Redux Toolkit** (State Yönetimi)
-* **React Navigation** (Stack Navigator)
-* **React Native Reanimated v3** (Performanslı Animasyonlar)
-* **Expo AV** (Ses Yönetimi)
-* **Expo Linear Gradient** (Görsel Tasarım)
+* React Native & Expo
+* Redux Toolkit (State Yönetimi)
+* React Navigation (Stack Navigator)
+* React Native Reanimated v3 (Performanslı Animasyonlar)
+* Expo AV (Ses Yönetimi)
+* Expo Linear Gradient (Görsel Tasarım)
 
 ### Backend (API & Veri Tabanı)
-* **NestJS** (Node.js Framework)
-* **TypeORM** (Veri Tabanı ORM)
-* **PostgreSQL** & **pgAdmin 4** (İlişkisel Veri Tabanı)
+* NestJS (Node.js Framework)
+* TypeORM (Veri Tabanı ORM)
+* PostgreSQL & "SupaBase"(İlişkisel Veri Tabanı)
 
 ---
 
