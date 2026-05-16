@@ -1,10 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, TextInput, StyleSheet, Alert, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, TextInput, StyleSheet, Alert, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { API_URL } from '../../../constants/config';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = useCallback(async () => {
     
@@ -13,15 +15,22 @@ export default function RegisterScreen({ navigation }) {
       return;
     }
 
+    setIsLoading(true);
+
     try {
 
-      const apiUrl = 'http://192.168.127.1:3000/auth/register'; 
+      const apiUrl = `${API_URL}/auth/register`; 
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 35000);
 
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
+        signal: controller.signal
       });
+      clearTimeout(timeoutId);
 
       const textData = await response.text(); 
       const data = textData ? JSON.parse(textData) : {};
@@ -33,7 +42,13 @@ export default function RegisterScreen({ navigation }) {
         Alert.alert("Hata", data.message || "Kayıt yapılamadı.");
       }
     } catch (error) {
-      Alert.alert("Bağlantı Hatası", "Sunucuya ulaşılamıyor.");
+      if (error.name === 'AbortError') {
+        Alert.alert("Zaman Aşımı", "Sunucu şu an uyanıyor olabilir, lütfen birazdan tekrar deneyin.");
+      } else {
+        Alert.alert("Bağlantı Hatası", "Sunucuya ulaşılamıyor.");
+      }
+    } finally {
+      setIsLoading(false);
     }
   }, [username, password, navigation]);
 
@@ -64,8 +79,16 @@ export default function RegisterScreen({ navigation }) {
           />
           
           <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.customRegisterButton} onPress={handleRegister}>
-              <Text style={styles.buttonText}>KAYIT OL</Text>
+            <TouchableOpacity 
+              style={[styles.customRegisterButton, isLoading && {opacity: 0.7}]} 
+              onPress={handleRegister}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.buttonText}>KAYIT OL</Text>
+              )}
             </TouchableOpacity>
             
             <View style={{ height: 15 }} />

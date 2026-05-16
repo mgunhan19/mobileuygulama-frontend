@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
+import { API_URL } from '../../../constants/config';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
@@ -15,7 +16,7 @@ export default function LeaderboardScreen({ navigation }) {
   const fetchLeaderboard = async () => {
     try {
       // Kendi bilgisayarının yerel IP adresini buraya yazmalısın
-      const response = await fetch('http://192.168.127.1:3000/auth/leaderboard');
+      const response = await fetch(`${API_URL}/auth/leaderboard`);
       const json = await response.json();
       
       // Backend'den gelen veriyi state'e atıyoruz

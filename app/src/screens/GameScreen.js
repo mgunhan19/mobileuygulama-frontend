@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, ScrollView, Dimensions, Modal } from 'react-native';
+import { API_URL } from '../../../constants/config';
 import { useSelector, useDispatch } from 'react-redux';
 import { LinearGradient } from 'expo-linear-gradient';
 import { updateUserScore } from '../store/authSlice';
@@ -23,6 +24,8 @@ export default function GameScreen({ navigation }) {
   const [selectedAnimOption, setSelectedAnimOption] = useState(null);
   const [currentLevel, setCurrentLevel] = useState(1);
   const [timeLeft, setTimeLeft] = useState(15); 
+  const [showLevelModal, setShowLevelModal] = useState(false);
+  const [levelScore, setLevelScore] = useState(0);
 
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
@@ -85,7 +88,7 @@ export default function GameScreen({ navigation }) {
   const fetchQuestions = async (level) => { 
     try {
       setLoading(true);
-      const response = await fetch(`http://192.168.127.1:3000/questions?level=${level}`);
+      const response = await fetch(`${API_URL}/questions?level=${level}`);
       const data = await response.json();
       setQuestions(data);
       setCurrentQuestionIndex(0); 
@@ -99,7 +102,7 @@ export default function GameScreen({ navigation }) {
 
   const saveScoreToDB = async (finalScore) => {
     try {
-      const response = await fetch('http://192.168.127.1:3000/auth/update-score', {
+      const response = await fetch(`${API_URL}/auth/update-score`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, score: finalScore }),
@@ -141,10 +144,8 @@ export default function GameScreen({ navigation }) {
       } 
       else {
         saveScoreToDB(newScore);
-        Alert.alert("Level Tamamlandı!", `Seviye ${currentLevel} bitti. Puanın: ${newScore}`, [
-          { text: "Sonraki Seviye", onPress: () => { setSelectedAnimOption(null); setCurrentLevel(prev => prev + 1); } },
-          { text: "Ana Menü", onPress: () => navigation.navigate('MainMenu') }
-        ]);
+        setLevelScore(newScore);
+        setShowLevelModal(true);
       }
     }, 1200);
   };
@@ -227,6 +228,44 @@ export default function GameScreen({ navigation }) {
           </View>
         </Animated.View>
       </ScrollView>
+
+      <Modal visible={showLevelModal} transparent={true} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>TEBRİKLER!</Text>
+            <Text style={styles.modalSubtitle}>Seviye {currentLevel} Tamamlandı</Text>
+            
+            <View style={styles.scoreContainer}>
+              <Text style={styles.scoreText}>Kazanılan Puan</Text>
+              <Text style={styles.modalScoreValue}>{levelScore}</Text>
+            </View>
+
+            <View style={styles.modalButtonContainer}>
+              <TouchableOpacity 
+                style={styles.nextLevelButton} 
+                onPress={() => { 
+                  setShowLevelModal(false); 
+                  setSelectedAnimOption(null); 
+                  setCurrentLevel(prev => prev + 1); 
+                }}
+              >
+                <Text style={styles.nextLevelButtonText}>Sonraki Seviye</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={styles.mainMenuButton} 
+                onPress={() => { 
+                  setShowLevelModal(false); 
+                  navigation.navigate('MainMenu'); 
+                }}
+              >
+                <Text style={styles.mainMenuButtonText}>Ana Menü</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </LinearGradient>
   );
 }
@@ -250,5 +289,17 @@ const styles = StyleSheet.create({
   optionButton: { backgroundColor: 'rgba(255, 255, 255, 0.9)', flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 18, elevation: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 5, borderWidth: 2, borderColor: 'transparent' },
   optionLetterContainer: { backgroundColor: '#6772e5', width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   optionLetterText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
-  optionText: { color: '#444', fontSize: 16, fontWeight: '500', flex: 1 }
+  optionText: { color: '#444', fontSize: 16, fontWeight: '500', flex: 1 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { backgroundColor: 'rgba(255, 255, 255, 0.95)', padding: 30, borderRadius: 25, width: '100%', alignItems: 'center', elevation: 15, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10 },
+  modalTitle: { fontSize: 28, fontWeight: '900', color: '#6772e5', marginBottom: 5, textAlign: 'center', letterSpacing: 1 },
+  modalSubtitle: { fontSize: 16, color: '#666', marginBottom: 20, fontWeight: '500' },
+  scoreContainer: { backgroundColor: '#f0f2f5', paddingVertical: 15, paddingHorizontal: 30, borderRadius: 15, alignItems: 'center', marginBottom: 25, width: '100%' },
+  scoreText: { color: '#666', fontSize: 14, fontWeight: 'bold', marginBottom: 5 },
+  modalScoreValue: { color: '#4e8cff', fontSize: 32, fontWeight: '900' },
+  modalButtonContainer: { width: '100%', gap: 12 },
+  nextLevelButton: { backgroundColor: '#4e8cff', padding: 16, borderRadius: 15, alignItems: 'center', elevation: 3 },
+  nextLevelButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  mainMenuButton: { backgroundColor: 'transparent', padding: 16, borderRadius: 15, alignItems: 'center', borderWidth: 2, borderColor: '#e1e4e8' },
+  mainMenuButtonText: { color: '#666', fontSize: 16, fontWeight: 'bold' }
 });
