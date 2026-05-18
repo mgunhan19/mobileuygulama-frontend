@@ -1,50 +1,69 @@
-# Welcome to your Expo app 👋
+# 🎮 Bildin Bildin - Mobil Bilgi Yarışması Oyunu
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+"Bildin Bildin", Starklar Game tarafından geliştirilen, kullanıcıların zamana karşı yarıştığı, dinamik animasyonlar ve ses efektleriyle zenginleştirilmiş modern bir mobil bilgi yarışması oyunudur. Proje, full-stack (React Native & NestJS) bir mimariye sahiptir.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚀 Özellikler
 
-   ```bash
-   npm install
-   ```
+* Dinamik Seviye (Level) Sistemi:Kullanıcılar her seviyede farklı zorlukta sorularla karşılaşır. Seviye tamamlandığında skorları güncellenir.
+* Zamana Karşı Yarış: Her soru için oyuncunun 15 saniyesi vardır. Süre bittiğinde otomatik olarak yanlış cevap sayılır.
+* Game Feel & Akıcı Animasyonlar (`React-Native-Reanimated`): Sorular ekrana soldan hızla kayarak girer.
+    * Doğru cevap verildiğinde soru kartı yeşil olur ve geri dönüt vermiş olur.
+    * Yanlış cevapta kart iki yana sallanarak (Shake efekti) kullanıcıya geri bildirim verir.
+* Ses Efektleri (`Expo-AV`): Doğru/yanlış cevap tınıları ve oyun içi arka plan müziği ile zenginleştirilmiş ses tasarımı.
+* Merkezi State Yönetimi (`Redux Toolkit`): Kullanıcı giriş durumu ve skor bilgileri yerel hafızada anlık olarak senkronize edilir, profil sayfasında anında güncellenir.
+* Canlı Liderlik Tablosu (Leaderboard): Tüm oyuncuların `highScore` (en yüksek skor) verilerini veri tabanından çekerek ilk 10 oyuncuyu sıralar.
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 🛠️ Kullanılan Teknolojiler
 
-In the output, you'll find options to open the app in a
+### Frontend (Mobil Uygulama)
+* React Native & Expo
+* Redux Toolkit (State Yönetimi)
+* React Navigation (Stack Navigator)
+* React Native Reanimated v3 (Performanslı Animasyonlar)
+* Expo AV (Ses Yönetimi)
+* Expo Linear Gradient (Görsel Tasarım)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### Backend (API & Veri Tabanı)
+* NestJS (Node.js Framework)
+* TypeORM (Veri Tabanı ORM)
+* PostgreSQL & "SupaBase"(İlişkisel Veri Tabanı)
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 📂 Proje Yapısı
 
-When you're ready, run:
+### Backend (NestJS)
+```text
+src/
+├── auth/
+│   └── (Giriş/Kayıt servisleri)
+├── user/
+│   ├── user.controller.ts  # Leaderboard, Profile, Score API uçları
+│   ├── user.service.ts     # SQL sorguları ve skor güncelleme mantığı
+│   ├── user.entity.ts      # PostgreSQL Kullanıcı Tablosu Yapısı
+│   └── questions/          # Soru yönetim modülü
+└── main.ts
+Frontend (React Native)
+Plaintext
+src/
+├── assets/sounds/         # bg_music, correct, wrong ses dosyaları
+├── navigation/
+│   └── AppNavigator.js    # Ekran geçiş rotaları
+├── store/
+│   └── authSlice.js       # Global kullanıcı ve skor state'i
+└── screens/
+    ├── MainMenu.js        # Ana Menü
+    ├── GameScreen.js      # Oyun Ekranı ve Animasyonlar
+    ├── ProfileScreen.js   # Kullanıcı Profil Sayfası
+    └── LeaderboardScreen.js # Canlı Skor Tablosu
 
-```bash
-npm run reset-project
-```
+👥 Geliştiriciler
+Starklar Game Team
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Mehmet Günhan
 
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+⭐ Bu projeyi beğendiyseniz yıldız (star) vermeyi unutmayın!
