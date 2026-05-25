@@ -5,12 +5,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RegisterScreen({ navigation }) {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = useCallback(async () => {
     
-    if (!username || !password) {
+    if (!username || !email || !password) {
       Alert.alert("Hata", "Lütfen tüm alanları doldurun.");
       return;
     }
@@ -27,7 +28,7 @@ export default function RegisterScreen({ navigation }) {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, email, password }),
         signal: controller.signal
       });
       clearTimeout(timeoutId);
@@ -50,7 +51,7 @@ export default function RegisterScreen({ navigation }) {
     } finally {
       setIsLoading(false);
     }
-  }, [username, password, navigation]);
+  }, [username, email, password, navigation]);
 
   return (
     <LinearGradient colors={['#a07cf0', '#6772e5', '#4e8cff']} style={styles.container}>
@@ -68,6 +69,15 @@ export default function RegisterScreen({ navigation }) {
             onChangeText={setUsername} 
             value={username}
             autoCapitalize="none"
+          />
+          <TextInput 
+            placeholder="E-posta" 
+            placeholderTextColor="#666"
+            style={styles.input} 
+            onChangeText={setEmail} 
+            value={email}
+            autoCapitalize="none"
+            keyboardType="email-address"
           />
           <TextInput 
             placeholder="Şifre" 

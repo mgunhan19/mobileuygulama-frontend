@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
-import { useSelector } from 'react-redux';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, TextInput, ActivityIndicator } from 'react-native';
+import { useSelector, useDispatch } from 'react-redux';
 import { LinearGradient } from 'expo-linear-gradient';
+import { updateUserEmail } from '../store/authSlice';
+import { API_URL } from '../../../constants/config';
 import * as ImagePicker from 'expo-image-picker'; // Fotoğraf seçmek için ekledik
 import AsyncStorage from '@react-native-async-storage/async-storage'; // Fotoğrafı cihazda saklamak için
 
 export default function ProfileScreen({ navigation }) {
   const user = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
   const [profileImage, setProfileImage] = useState(null);
+  const [newEmail, setNewEmail] = useState(user?.email || '');
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
 
   // Uygulama her açıldığında kaydedilen fotoğrafı yükle
   useEffect(() => {
@@ -24,7 +29,6 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const pickImage = async () => {
-    // Galeriden izin iste
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (status !== 'granted') {
@@ -35,15 +39,40 @@ export default function ProfileScreen({ navigation }) {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [1, 1], // Kare şeklinde kesme
+      aspect: [1, 1],
       quality: 0.5,
     });
 
     if (!result.canceled) {
       const imageUri = result.assets[0].uri;
       setProfileImage(imageUri);
-      // Fotoğrafı cihaza kalıcı olarak kaydet (sen değiştirene kadar durur)
       await AsyncStorage.setItem(`profile_image_${user?.id}`, imageUri);
+    }
+  };
+
+  const handleUpdateEmail = async () => {
+    if (!newEmail.includes('@')) {
+      Alert.alert("Geçersiz", "Lütfen geçerli bir e-posta adresi girin.");
+      return;
+    }
+    setIsUpdatingEmail(true);
+    try {
+      const response = await fetch(`${API_URL}/auth/add-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id, email: newEmail })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        dispatch(updateUserEmail(newEmail));
+        Alert.alert("Başarılı", "E-posta adresiniz kaydedildi!");
+      } else {
+        Alert.alert("Hata", data.message || "E-posta güncellenemedi.");
+      }
+    } catch (e) {
+      Alert.alert("Hata", "Sunucuya bağlanılamadı.");
+    } finally {
+      setIsUpdatingEmail(false);
     }
   };
 
@@ -72,8 +101,20 @@ export default function ProfileScreen({ navigation }) {
           
           <View style={styles.divider} />
 
-          <Text style={styles.label}>Öğrenci No</Text>
-          <Text style={styles.value}>23020021049</Text> 
+          <Text style={styles.label}>E-Posta</Text>
+          <View style={styles.emailContainer}>
+            <TextInput
+              style={styles.emailInput}
+              value={newEmail}
+              onChangeText={setNewEmail}
+              placeholder="E-posta ekle/değiştir"
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+            <TouchableOpacity style={styles.emailSaveBtn} onPress={handleUpdateEmail} disabled={isUpdatingEmail}>
+              {isUpdatingEmail ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.emailSaveText}>Kaydet</Text>}
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.divider} />
 
@@ -142,8 +183,13 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     width: '100%',
     borderRadius: 15,
-    alignItems: 'center'
+    alignItems: 'center',
+    marginTop: 10
   },
   backButtonText: { color: '#fff', fontWeight: 'bold' },
-  footerText: { position: 'absolute', bottom: 20, color: '#fff', opacity: 0.6 }
+  footerText: { position: 'absolute', bottom: 20, color: '#fff', opacity: 0.6 },
+  emailContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  emailInput: { flex: 1, backgroundColor: '#f0f2f5', padding: 10, borderRadius: 8, marginRight: 10, color: '#333' },
+  emailSaveBtn: { backgroundColor: '#4CAF50', padding: 10, borderRadius: 8, justifyContent: 'center', minWidth: 70, alignItems: 'center' },
+  emailSaveText: { color: '#fff', fontWeight: 'bold', fontSize: 12 }
 });

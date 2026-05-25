@@ -8,13 +8,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function LoginScreen({ navigation }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const dispatch = useDispatch();
 
-
   const handleLogin = useCallback(async () => {
+    setErrorMessage('');
     if (!username || !password) {
-      Alert.alert("Hata", "Lütfen tüm alanları doldurun.");
+      setErrorMessage("Lütfen tüm alanları doldurun.");
       return;
     }
 
@@ -39,14 +40,14 @@ export default function LoginScreen({ navigation }) {
         Alert.alert("Başarılı", "Hoş geldin " + username);
         navigation.navigate('MainMenu');
       } else {
-        Alert.alert("Hata", data.message || "Giriş bilgileri hatalı.");
+        setErrorMessage(data.message || "Giriş bilgileri hatalı.");
       }
     } catch (error) {
       console.log("Giriş Hatası:", error);
       if (error.name === 'AbortError') {
-        Alert.alert("Zaman Aşımı", "Sunucu şu an uyanıyor olabilir, lütfen birazdan tekrar deneyin.");
+        setErrorMessage("Sunucu şu an uyanıyor olabilir, lütfen birazdan tekrar deneyin.");
       } else {
-        Alert.alert("Bağlantı Hatası", "Sunucuya ulaşılamıyor.");
+        setErrorMessage("Sunucuya ulaşılamıyor. İnternet bağlantınızı kontrol edin.");
       }
     } finally {
       setIsLoading(false);
@@ -66,7 +67,7 @@ export default function LoginScreen({ navigation }) {
             placeholder="Kullanıcı Adı"
             placeholderTextColor="#666"
             style={styles.input}
-            onChangeText={setUsername}
+            onChangeText={(text) => { setUsername(text); setErrorMessage(''); }}
             autoCapitalize="none"
           />
 
@@ -75,8 +76,14 @@ export default function LoginScreen({ navigation }) {
             placeholderTextColor="#666"
             secureTextEntry
             style={styles.input}
-            onChangeText={setPassword}
+            onChangeText={(text) => { setPassword(text); setErrorMessage(''); }}
           />
+
+          {errorMessage ? (
+            <Text style={{ color: '#d9534f', textAlign: 'center', marginBottom: 15, fontWeight: 'bold' }}>
+              {errorMessage}
+            </Text>
+          ) : null}
 
           <View style={styles.buttonContainer}>
             <TouchableOpacity
@@ -91,9 +98,13 @@ export default function LoginScreen({ navigation }) {
               )}
             </TouchableOpacity>
 
+            <TouchableOpacity style={{ marginTop: 15 }} onPress={() => navigation.navigate('ForgotPassword')}>
+              <Text style={{ color: '#6772e5', textAlign: 'center', fontWeight: 'bold' }}>Şifremi Unuttum</Text>
+            </TouchableOpacity>
+
             <View style={{ marginVertical: 10 }} />
 
-            <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <TouchableOpacity onPress={() => { setErrorMessage(''); navigation.navigate('Register'); }}>
               <Text style={styles.registerText}>
                 Hesabın Yok mu? <Text style={styles.registerLink}>Kayıt Ol</Text>
               </Text>

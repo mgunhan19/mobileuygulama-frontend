@@ -18,8 +18,13 @@ const authSlice = createSlice({
         state.user.score = action.payload; 
       }
     },
+    updateUserEmail: (state, action) => {
+      if (state.user) {
+        state.user.email = action.payload;
+      }
+    }
   }
 });
 
-export const {loginAction, logoutAction, updateUserScore} = authSlice.actions;
+export const {loginAction, logoutAction, updateUserScore, updateUserEmail} = authSlice.actions;
 export default authSlice.reducer;
