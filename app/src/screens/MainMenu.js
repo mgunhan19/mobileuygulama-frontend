@@ -54,6 +54,7 @@ export default function MainMenu({ navigation }) {
               }
             } catch (error) {
               console.log("Seviye sıfırlama hatası:", error);
+              Alert.alert("Bağlantı Hatası", "Sunucuya ulaşılamadı. Lütfen internetinizi veya sunucunun açık olduğunu kontrol edin.");
             }
           },
           style: "destructive"
