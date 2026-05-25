@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Platform } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutAction, updateUserLevel } from '../store/authSlice'; 
 import { LinearGradient } from 'expo-linear-gradient';
@@ -30,37 +30,56 @@ export default function MainMenu({ navigation }) {
 
   const handleResetLevel = () => {
     playClick();
-    Alert.alert(
-      "Seviyeyi Sıfırla",
-      "Oyun seviyeniz 1'e dönecek. Emin misiniz?",
-      [
-        { text: "İptal", style: "cancel" },
-        { 
-          text: "Sıfırla", 
-          onPress: async () => {
-            try {
-              const response = await fetch(`${API_URL}/auth/reset-level`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id }),
-              });
-              if (response.ok) {
-                dispatch(updateUserLevel(1));
-                Alert.alert("Başarılı", "Seviyeniz 1'e sıfırlandı! Yeni bir efsane başlıyor...", [
-                  { text: "Oyuna Git", onPress: () => { playClick(); navigation.navigate('Game'); } }
-                ]);
-              } else {
-                Alert.alert("Hata", "Sunucu güncelleniyor olabilir (Render), lütfen 1-2 dakika bekleyip tekrar deneyin.");
-              }
-            } catch (error) {
-              console.log("Seviye sıfırlama hatası:", error);
-              Alert.alert("Bağlantı Hatası", "Sunucuya ulaşılamadı. Lütfen internetinizi veya sunucunun açık olduğunu kontrol edin.");
-            }
-          },
-          style: "destructive"
+    
+    const resetProcess = async () => {
+      try {
+        const response = await fetch(`${API_URL}/auth/reset-level`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id }),
+        });
+        if (response.ok) {
+          dispatch(updateUserLevel(1));
+          if (Platform.OS === 'web') {
+            window.alert("Başarılı! Seviyeniz 1'e sıfırlandı. Yeni bir efsane başlıyor...");
+            navigation.navigate('Game');
+          } else {
+            Alert.alert("Başarılı", "Seviyeniz 1'e sıfırlandı! Yeni bir efsane başlıyor...", [
+              { text: "Oyuna Git", onPress: () => { playClick(); navigation.navigate('Game'); } }
+            ]);
+          }
+        } else {
+          if (Platform.OS === 'web') {
+            window.alert("Hata: Sunucu güncelleniyor olabilir (Render), lütfen 1-2 dakika bekleyip tekrar deneyin.");
+          } else {
+            Alert.alert("Hata", "Sunucu güncelleniyor olabilir (Render), lütfen 1-2 dakika bekleyip tekrar deneyin.");
+          }
         }
-      ]
-    );
+      } catch (error) {
+        console.log("Seviye sıfırlama hatası:", error);
+        if (Platform.OS === 'web') {
+          window.alert("Bağlantı Hatası: Sunucuya ulaşılamadı. Lütfen internetinizi kontrol edin.");
+        } else {
+          Alert.alert("Bağlantı Hatası", "Sunucuya ulaşılamadı. Lütfen internetinizi veya sunucunun açık olduğunu kontrol edin.");
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const isConfirmed = window.confirm("Oyun seviyeniz 1'e dönecek. Emin misiniz?");
+      if (isConfirmed) {
+        resetProcess();
+      }
+    } else {
+      Alert.alert(
+        "Seviyeyi Sıfırla",
+        "Oyun seviyeniz 1'e dönecek. Emin misiniz?",
+        [
+          { text: "İptal", style: "cancel" },
+          { text: "Sıfırla", onPress: resetProcess, style: "destructive" }
+        ]
+      );
+    }
   };
   
   return (
