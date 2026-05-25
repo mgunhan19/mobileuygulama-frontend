@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { LinearGradient } from 'expo-linear-gradient';
 import { updateUserScore } from '../store/authSlice';
 import { Audio } from 'expo-av'; // EKLEME: Ses kütüphanesi
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -13,6 +14,7 @@ import Animated, {
   withDelay,
   Easing 
 } from 'react-native-reanimated';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -26,9 +28,23 @@ export default function GameScreen({ navigation }) {
   const [timeLeft, setTimeLeft] = useState(15); 
   const [showLevelModal, setShowLevelModal] = useState(false);
   const [levelScore, setLevelScore] = useState(0);
+  const [bonusMessage, setBonusMessage] = useState(null);
+  const [combo, setCombo] = useState(0);
 
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    const loadSavedLevel = async () => {
+      try {
+        const savedLevel = await AsyncStorage.getItem('@current_level');
+        if (savedLevel !== null) {
+          setCurrentLevel(parseInt(savedLevel, 10));
+        }
+      } catch (e) { console.log('Level load error', e); }
+    };
+    loadSavedLevel();
+  }, []);
 
   // --- SES FONKSİYONU ---
   const playSound = async (type) => {
@@ -79,11 +95,11 @@ export default function GameScreen({ navigation }) {
   }, [currentQuestionIndex, loading]);
 
   useEffect(() => {
-    if (loading || questions.length === 0 || selectedAnimOption !== null) return;
+    if (loading || questions.length === 0 || selectedAnimOption !== null || showLevelModal) return;
     if (timeLeft === 0) { handleAnswer(null); return; }
     const timer = setInterval(() => { setTimeLeft((prev) => prev - 1); }, 1000);
     return () => clearInterval(timer);
-  }, [timeLeft, loading, questions, selectedAnimOption]);
+  }, [timeLeft, loading, questions, selectedAnimOption, showLevelModal]);
 
   const fetchQuestions = async (level) => { 
     try {
@@ -125,11 +141,26 @@ export default function GameScreen({ navigation }) {
 
     let newScore = score;
     if (isCorrect) {
-      newScore = score + 10;
+      const currentCombo = combo + 1;
+      setCombo(currentCombo);
+
+      const speedBonus = timeLeft; // Kalan saniye bonusu
+      const comboBonus = currentCombo > 1 ? currentCombo * 5 : 0; // Kombo bonusu
+      const earnedPoints = 10 + speedBonus + comboBonus; // Toplam kazanılan puan
+      
+      newScore = score + earnedPoints;
       setScore(newScore);
+
+      let msg = `+${earnedPoints} Puan`;
+      if (speedBonus > 0) msg += `\n(+${speedBonus} Hız)`;
+      if (comboBonus > 0) msg += `\n🔥 ${currentCombo}x KOMBO (+${comboBonus})`;
+      
+      setBonusMessage(msg);
+
       translateY.value = withDelay(500, withTiming(-width * 1.5, { duration: 600, easing: Easing.in(Easing.exp) }));
       opacity.value = withDelay(700, withTiming(0, { duration: 300 }));
     } else {
+      setCombo(0); // Yanlış cevapta kombo sıfırlanır
       translateX.value = withSequence(
         withTiming(-20, { duration: 50 }), withTiming(20, { duration: 50 }),
         withTiming(-20, { duration: 50 }), withTiming(20, { duration: 50 }), withTiming(0, { duration: 50 })
@@ -137,6 +168,7 @@ export default function GameScreen({ navigation }) {
     }
 
     setTimeout(() => {
+      setBonusMessage(null);
       if (currentQuestionIndex + 1 < questions.length) {
         setSelectedAnimOption(null);
         setTimeLeft(15); 
@@ -189,6 +221,13 @@ export default function GameScreen({ navigation }) {
   return (
     <LinearGradient colors={['#a07cf0', '#6772e5', '#4e8cff']} style={styles.container}>
       <View style={styles.topInfo}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => { playSound('click'); navigation.navigate('MainMenu'); }}
+        >
+          <Ionicons name="home" size={24} color="#fff" />
+        </TouchableOpacity>
+        
         <View style={styles.scoreBadge}>
           <Text style={styles.scoreLabel}>PUAN</Text>
           <Text style={styles.scoreValue}>{score}</Text>
@@ -201,6 +240,12 @@ export default function GameScreen({ navigation }) {
         </View>
       </View>
       
+      {bonusMessage && (
+        <Animated.View style={combo > 1 ? styles.comboBadge : styles.bonusBadge}>
+          <Text style={combo > 1 ? styles.comboText : styles.bonusText}>{bonusMessage}</Text>
+        </Animated.View>
+      )}
+
       <ScrollView contentContainerStyle={styles.scrollContent} scrollEnabled={false}>
         <Animated.View style={[styles.animatedWrapper, animatedStyle]}>
           <View style={styles.questionCard}>
@@ -243,10 +288,14 @@ export default function GameScreen({ navigation }) {
             <View style={styles.modalButtonContainer}>
               <TouchableOpacity 
                 style={styles.nextLevelButton} 
-                onPress={() => { 
+                onPress={async () => { 
                   setShowLevelModal(false); 
                   setSelectedAnimOption(null); 
-                  setCurrentLevel(prev => prev + 1); 
+                  const nextLvl = currentLevel + 1;
+                  setCurrentLevel(nextLvl); 
+                  try {
+                    await AsyncStorage.setItem('@current_level', nextLvl.toString());
+                  } catch (e) { console.log(e); }
                 }}
               >
                 <Text style={styles.nextLevelButtonText}>Sonraki Seviye</Text>
@@ -273,8 +322,9 @@ export default function GameScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  topInfo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 50, paddingBottom: 20 },
-  scoreBadge: { backgroundColor: 'rgba(255, 255, 255, 0.2)', paddingHorizontal: 15, paddingVertical: 8, borderRadius: 15, alignItems: 'center' },
+  topInfo: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 15, paddingTop: 50, paddingBottom: 20 },
+  backButton: { backgroundColor: 'rgba(255, 255, 255, 0.2)', padding: 10, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginRight: 5 },
+  scoreBadge: { backgroundColor: 'rgba(255, 255, 255, 0.2)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 15, alignItems: 'center', flex: 1, marginHorizontal: 5 },
   scoreLabel: { color: '#fff', fontSize: 10, fontWeight: 'bold', opacity: 0.8 },
   scoreValue: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   timerBadge: { backgroundColor: 'rgba(0, 0, 0, 0.2)', width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff' },
@@ -301,5 +351,9 @@ const styles = StyleSheet.create({
   nextLevelButton: { backgroundColor: '#4e8cff', padding: 16, borderRadius: 15, alignItems: 'center', elevation: 3 },
   nextLevelButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   mainMenuButton: { backgroundColor: 'transparent', padding: 16, borderRadius: 15, alignItems: 'center', borderWidth: 2, borderColor: '#e1e4e8' },
-  mainMenuButtonText: { color: '#666', fontSize: 16, fontWeight: 'bold' }
+  mainMenuButtonText: { color: '#666', fontSize: 16, fontWeight: 'bold' },
+  bonusBadge: { alignSelf: 'center', backgroundColor: '#4CAF50', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, marginTop: -10, marginBottom: 10, elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5 },
+  bonusText: { color: '#fff', fontWeight: 'bold', fontSize: 16, textAlign: 'center' },
+  comboBadge: { alignSelf: 'center', backgroundColor: '#FF9800', paddingHorizontal: 25, paddingVertical: 12, borderRadius: 25, marginTop: -10, marginBottom: 10, elevation: 10, shadowColor: '#FF9800', shadowOpacity: 0.5, shadowRadius: 10, borderWidth: 2, borderColor: '#fff' },
+  comboText: { color: '#fff', fontWeight: '900', fontSize: 18, textAlign: 'center', textShadowColor: 'rgba(0,0,0,0.2)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 2 }
 });

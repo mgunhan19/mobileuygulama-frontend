@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logoutAction } from '../store/authSlice'; 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio } from 'expo-av'; 
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 export default function MainMenu({ navigation }) {
   const user = useSelector((state) => state.auth.user);
@@ -25,6 +26,29 @@ export default function MainMenu({ navigation }) {
     playClick(); 
     dispatch(logoutAction());
     navigation.navigate('Login'); 
+  };
+
+  const handleResetLevel = () => {
+    playClick();
+    Alert.alert(
+      "Seviyeyi Sıfırla",
+      "Oyun seviyeniz 1'e dönecek. Emin misiniz?",
+      [
+        { text: "İptal", style: "cancel" },
+        { 
+          text: "Sıfırla", 
+          onPress: async () => {
+            try {
+              await AsyncStorage.setItem('@current_level', '1');
+              Alert.alert("Başarılı", "Seviyeniz 1'e sıfırlandı!");
+            } catch (error) {
+              console.log("Seviye sıfırlama hatası:", error);
+            }
+          },
+          style: "destructive"
+        }
+      ]
+    );
   };
   
   return (
@@ -66,6 +90,15 @@ export default function MainMenu({ navigation }) {
           >
             <LinearGradient colors={['#FFB74D', '#FFA726']} style={styles.buttonGradient}>
               <Text style={styles.secondaryButtonText}>SKOR TABLOSU</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            style={styles.secondaryButton} 
+            onPress={handleResetLevel}
+          >
+            <LinearGradient colors={['#9C27B0', '#7B1FA2']} style={styles.buttonGradient}>
+              <Text style={styles.secondaryButtonText}>SEVİYEYİ SIFIRLA</Text>
             </LinearGradient>
           </TouchableOpacity>
 
