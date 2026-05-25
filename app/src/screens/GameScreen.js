@@ -3,9 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Scr
 import { API_URL } from '../../../constants/config';
 import { useSelector, useDispatch } from 'react-redux';
 import { LinearGradient } from 'expo-linear-gradient';
-import { updateUserScore } from '../store/authSlice';
-import { Audio } from 'expo-av'; // EKLEME: Ses kütüphanesi
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { updateUserScore, updateUserLevel } from '../store/authSlice';
+import { Audio } from 'expo-av'; 
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -34,17 +33,12 @@ export default function GameScreen({ navigation }) {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
+  // Kullanıcının veritabanındaki seviyesinden başla
   useEffect(() => {
-    const loadSavedLevel = async () => {
-      try {
-        const savedLevel = await AsyncStorage.getItem('@current_level');
-        if (savedLevel !== null) {
-          setCurrentLevel(parseInt(savedLevel, 10));
-        }
-      } catch (e) { console.log('Level load error', e); }
-    };
-    loadSavedLevel();
-  }, []);
+    if (user && user.level) {
+      setCurrentLevel(user.level);
+    }
+  }, [user]);
 
   // --- SES FONKSİYONU ---
   const playSound = async (type) => {
@@ -125,6 +119,17 @@ export default function GameScreen({ navigation }) {
       });
       if (response.ok) { dispatch(updateUserScore(finalScore)); }
     } catch (error) { console.log("Skor kaydedilemedi:", error); }
+  };
+
+  const saveLevelToDB = async (newLevel) => {
+    try {
+      const response = await fetch(`${API_URL}/auth/update-level`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, level: newLevel }),
+      });
+      if (response.ok) { dispatch(updateUserLevel(newLevel)); }
+    } catch (error) { console.log("Seviye kaydedilemedi:", error); }
   };
 
   const handleAnswer = (selectedOption) => {
@@ -293,9 +298,7 @@ export default function GameScreen({ navigation }) {
                   setSelectedAnimOption(null); 
                   const nextLvl = currentLevel + 1;
                   setCurrentLevel(nextLvl); 
-                  try {
-                    await AsyncStorage.setItem('@current_level', nextLvl.toString());
-                  } catch (e) { console.log(e); }
+                  saveLevelToDB(nextLvl); // Veritabanına kaydet
                 }}
               >
                 <Text style={styles.nextLevelButtonText}>Sonraki Seviye</Text>

@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { logoutAction } from '../store/authSlice'; 
+import { logoutAction, updateUserLevel } from '../store/authSlice'; 
 import { LinearGradient } from 'expo-linear-gradient';
 import { Audio } from 'expo-av'; 
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import { API_URL } from '../../../constants/config';
 
 export default function MainMenu({ navigation }) {
   const user = useSelector((state) => state.auth.user);
@@ -39,8 +39,15 @@ export default function MainMenu({ navigation }) {
           text: "Sıfırla", 
           onPress: async () => {
             try {
-              await AsyncStorage.setItem('@current_level', '1');
-              Alert.alert("Başarılı", "Seviyeniz 1'e sıfırlandı!");
+              const response = await fetch(`${API_URL}/auth/update-level`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, level: 1 }),
+              });
+              if (response.ok) {
+                dispatch(updateUserLevel(1));
+                Alert.alert("Başarılı", "Seviyeniz 1'e sıfırlandı!");
+              }
             } catch (error) {
               console.log("Seviye sıfırlama hatası:", error);
             }
