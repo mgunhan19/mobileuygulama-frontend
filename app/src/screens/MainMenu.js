@@ -46,7 +46,11 @@ export default function MainMenu({ navigation }) {
               });
               if (response.ok) {
                 dispatch(updateUserLevel(1));
-                Alert.alert("Başarılı", "Seviyeniz 1'e sıfırlandı!");
+                Alert.alert("Başarılı", "Seviyeniz 1'e sıfırlandı! Yeni bir efsane başlıyor...", [
+                  { text: "Oyuna Git", onPress: () => { playClick(); navigation.navigate('Game'); } }
+                ]);
+              } else {
+                Alert.alert("Hata", "Sunucu güncelleniyor olabilir (Render), lütfen 1-2 dakika bekleyip tekrar deneyin.");
               }
             } catch (error) {
               console.log("Seviye sıfırlama hatası:", error);
