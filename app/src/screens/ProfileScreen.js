@@ -13,6 +13,15 @@ export default function ProfileScreen({ navigation }) {
   const [profileImage, setProfileImage] = useState(null);
   const [newEmail, setNewEmail] = useState(user?.email || '');
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+  
+  // E-Posta Doğrulama State'leri
+  const [verifyCode, setVerifyCode] = useState('');
+  const [showEmailVerify, setShowEmailVerify] = useState(false);
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+
+  // Şifre Değiştirme State'leri
+  const [newPassword, setNewPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Uygulama her açıldığında kaydedilen fotoğrafı yükle
   useEffect(() => {
@@ -64,8 +73,8 @@ export default function ProfileScreen({ navigation }) {
       });
       const data = await response.json();
       if (response.ok) {
-        dispatch(updateUserEmail(newEmail));
-        Alert.alert("Başarılı", "E-posta adresiniz kaydedildi!");
+        setShowEmailVerify(true); // Direkt değiştirmek yerine onay kodunu sor
+        Alert.alert("Doğrulama Kodu Gönderildi", "Lütfen e-postanıza gelen 6 haneli kodu girin.");
       } else {
         Alert.alert("Hata", data.message || "E-posta güncellenemedi.");
       }
@@ -73,6 +82,60 @@ export default function ProfileScreen({ navigation }) {
       Alert.alert("Hata", "Sunucuya bağlanılamadı.");
     } finally {
       setIsUpdatingEmail(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    if (!verifyCode) {
+      Alert.alert("Geçersiz", "Lütfen onay kodunu girin.");
+      return;
+    }
+    setIsVerifyingEmail(true);
+    try {
+      const response = await fetch(`${API_URL}/auth/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id, code: verifyCode })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        dispatch(updateUserEmail(newEmail));
+        setShowEmailVerify(false);
+        setVerifyCode('');
+        Alert.alert("Başarılı", "E-posta adresiniz doğrulandı ve kaydedildi!");
+      } else {
+        Alert.alert("Hata", data.message || "Onay kodu hatalı.");
+      }
+    } catch (e) {
+      Alert.alert("Hata", "Sunucuya bağlanılamadı.");
+    } finally {
+      setIsVerifyingEmail(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword.length < 6) {
+      Alert.alert("Zayıf Şifre", "Şifreniz en az 6 karakter olmalıdır.");
+      return;
+    }
+    setIsUpdatingPassword(true);
+    try {
+      const response = await fetch(`${API_URL}/auth/change-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user?.id, newPassword: newPassword })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setNewPassword('');
+        Alert.alert("Başarılı", "Şifreniz başarıyla değiştirildi!");
+      } else {
+        Alert.alert("Hata", data.message || "Şifre değiştirilemedi.");
+      }
+    } catch (e) {
+      Alert.alert("Hata", "Sunucuya bağlanılamadı.");
+    } finally {
+      setIsUpdatingPassword(false);
     }
   };
 
@@ -110,9 +173,42 @@ export default function ProfileScreen({ navigation }) {
               placeholder="E-posta ekle/değiştir"
               keyboardType="email-address"
               autoCapitalize="none"
+              editable={!showEmailVerify}
             />
-            <TouchableOpacity style={styles.emailSaveBtn} onPress={handleUpdateEmail} disabled={isUpdatingEmail}>
-              {isUpdatingEmail ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.emailSaveText}>Kaydet</Text>}
+            <TouchableOpacity style={styles.emailSaveBtn} onPress={handleUpdateEmail} disabled={isUpdatingEmail || showEmailVerify}>
+              {isUpdatingEmail ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.emailSaveText}>Kod Gönder</Text>}
+            </TouchableOpacity>
+          </View>
+
+          {showEmailVerify && (
+            <View style={styles.emailContainer}>
+              <TextInput
+                style={[styles.emailInput, { backgroundColor: '#eef2ff', borderColor: '#6772e5', borderWidth: 1 }]}
+                value={verifyCode}
+                onChangeText={setVerifyCode}
+                placeholder="6 Haneli Kodu Girin"
+                keyboardType="numeric"
+              />
+              <TouchableOpacity style={[styles.emailSaveBtn, { backgroundColor: '#6772e5' }]} onPress={handleVerifyEmail} disabled={isVerifyingEmail}>
+                {isVerifyingEmail ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.emailSaveText}>Onayla</Text>}
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <View style={styles.divider} />
+
+          <Text style={styles.label}>Şifre Değiştir</Text>
+          <View style={styles.emailContainer}>
+            <TextInput
+              style={styles.emailInput}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="Yeni Şifre"
+              secureTextEntry
+              autoCapitalize="none"
+            />
+            <TouchableOpacity style={[styles.emailSaveBtn, { backgroundColor: '#f44336' }]} onPress={handleUpdatePassword} disabled={isUpdatingPassword}>
+              {isUpdatingPassword ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.emailSaveText}>Değiştir</Text>}
             </TouchableOpacity>
           </View>
 
