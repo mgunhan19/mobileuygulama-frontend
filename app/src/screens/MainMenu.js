@@ -39,10 +39,10 @@ export default function MainMenu({ navigation }) {
           text: "Sıfırla", 
           onPress: async () => {
             try {
-              const response = await fetch(`${API_URL}/auth/update-level`, {
+              const response = await fetch(`${API_URL}/auth/reset-level`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.id, level: 1 }),
+                body: JSON.stringify({ userId: user.id }),
               });
               if (response.ok) {
                 dispatch(updateUserLevel(1));
