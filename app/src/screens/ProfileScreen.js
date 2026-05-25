@@ -19,10 +19,6 @@ export default function ProfileScreen({ navigation }) {
   const [showEmailVerify, setShowEmailVerify] = useState(false);
   const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
 
-  // Şifre Değiştirme State'leri
-  const [newPassword, setNewPassword] = useState('');
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
-
   // Uygulama her açıldığında kaydedilen fotoğrafı yükle
   useEffect(() => {
     loadProfileImage();
@@ -113,32 +109,6 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
-  const handleUpdatePassword = async () => {
-    if (newPassword.length < 6) {
-      Alert.alert("Zayıf Şifre", "Şifreniz en az 6 karakter olmalıdır.");
-      return;
-    }
-    setIsUpdatingPassword(true);
-    try {
-      const response = await fetch(`${API_URL}/auth/change-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id, newPassword: newPassword })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setNewPassword('');
-        Alert.alert("Başarılı", "Şifreniz başarıyla değiştirildi!");
-      } else {
-        Alert.alert("Hata", data.message || "Şifre değiştirilemedi.");
-      }
-    } catch (e) {
-      Alert.alert("Hata", "Sunucuya bağlanılamadı.");
-    } finally {
-      setIsUpdatingPassword(false);
-    }
-  };
-
   return (
     <LinearGradient colors={['#a07cf0', '#6772e5', '#4e8cff']} style={styles.container}>
       <View style={styles.headerContainer}>
@@ -194,23 +164,6 @@ export default function ProfileScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           )}
-
-          <View style={styles.divider} />
-
-          <Text style={styles.label}>Şifre Değiştir</Text>
-          <View style={styles.emailContainer}>
-            <TextInput
-              style={styles.emailInput}
-              value={newPassword}
-              onChangeText={setNewPassword}
-              placeholder="Yeni Şifre"
-              secureTextEntry
-              autoCapitalize="none"
-            />
-            <TouchableOpacity style={[styles.emailSaveBtn, { backgroundColor: '#f44336' }]} onPress={handleUpdatePassword} disabled={isUpdatingPassword}>
-              {isUpdatingPassword ? <ActivityIndicator color="#fff" size="small" /> : <Text style={styles.emailSaveText}>Değiştir</Text>}
-            </TouchableOpacity>
-          </View>
 
           <View style={styles.divider} />
 
